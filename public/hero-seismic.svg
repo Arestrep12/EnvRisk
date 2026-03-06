@@ -1,0 +1,20 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" rx="48" fill="#EEF1E7"/>
+  <rect x="24" y="24" width="1552" height="852" rx="38" fill="#F8F4EC" stroke="#CFD8CE" stroke-width="2"/>
+  <rect x="86" y="86" width="1180" height="670" rx="28" fill="#E0E8D7"/>
+  <path d="M1325 76V828" stroke="#D6D3CB" stroke-width="2"/>
+  <rect x="150" y="116" width="228" height="70" rx="22" fill="#EEE9DF"/>
+  <text x="187" y="161" fill="#204A37" font-family="Arial, sans-serif" font-size="28" letter-spacing="6">SISMOS</text>
+  <circle cx="1323" cy="191" r="124" fill="#E3EBD9"/>
+  <circle cx="1323" cy="191" r="88" stroke="#204A37" stroke-width="14"/>
+  <circle cx="1323" cy="191" r="46" stroke="#204A37" stroke-width="14"/>
+  <circle cx="1323" cy="191" r="12" fill="#204A37"/>
+  <path d="M150 676C257 614 357 587 456 594C581 603 690 672 787 731C888 792 972 816 1073 807C1143 801 1207 773 1268 725V828H150V676Z" fill="#285941"/>
+  <path d="M150 733C274 703 385 704 501 741C626 781 733 855 869 865C1012 876 1142 817 1268 734V828H150V733Z" fill="#6E987E"/>
+  <path d="M244 443L373 443L449 347L528 531L615 284L696 597L785 443L924 443" stroke="#204A37" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M980 653C1033 614 1081 595 1131 596" stroke="#F8F4EC" stroke-width="16" stroke-linecap="round"/>
+  <path d="M919 713C972 669 1028 651 1085 652" stroke="#F8F4EC" stroke-width="16" stroke-linecap="round"/>
+  <path d="M1078 396C1123 367 1169 356 1219 361" stroke="#204A37" stroke-width="14" stroke-linecap="round"/>
+  <path d="M1126 458C1175 425 1227 413 1285 417" stroke="#204A37" stroke-width="14" stroke-linecap="round"/>
+  <path d="M1181 521C1234 484 1292 471 1356 476" stroke="#204A37" stroke-width="14" stroke-linecap="round"/>
+</svg>

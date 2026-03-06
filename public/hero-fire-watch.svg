@@ -1,0 +1,22 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" rx="48" fill="#F5F0E7"/>
+  <rect x="24" y="24" width="1552" height="852" rx="38" fill="#FFFCF6" stroke="#D7DED3" stroke-width="2"/>
+  <rect x="86" y="86" width="1180" height="670" rx="28" fill="#E7ECD9"/>
+  <path d="M1325 76V828" stroke="#D9D5CD" stroke-width="2"/>
+  <rect x="150" y="116" width="284" height="70" rx="22" fill="#F1EEE4"/>
+  <text x="187" y="161" fill="#204A37" font-family="Arial, sans-serif" font-size="28" letter-spacing="6">INCENDIOS</text>
+  <circle cx="1324" cy="192" r="118" fill="#E8EEDC"/>
+  <path d="M1324 120C1365 169 1379 208 1378 247C1377 313 1329 363 1263 363C1210 363 1166 325 1166 271C1166 226 1198 186 1240 165C1240 201 1258 222 1282 222C1308 222 1322 198 1324 120Z" fill="#204A37"/>
+  <path d="M1303 194C1335 228 1343 255 1342 283C1341 325 1312 356 1271 356C1235 356 1207 327 1207 292C1207 261 1227 237 1255 224C1257 247 1270 263 1288 263C1304 263 1312 250 1303 194Z" fill="#D99142"/>
+  <path d="M148 646C236 578 322 528 412 507C514 483 610 503 696 557C802 623 846 713 938 757C1021 797 1128 792 1268 721V828H148V646Z" fill="#2A5B43"/>
+  <path d="M148 713C271 674 394 670 507 709C637 754 743 829 885 844C1021 858 1138 814 1268 732V828H148V713Z" fill="#5F9070"/>
+  <path d="M265 631C309 595 353 579 398 582" stroke="#FFFCF6" stroke-width="16" stroke-linecap="round"/>
+  <path d="M441 548C488 512 530 499 575 502" stroke="#FFFCF6" stroke-width="16" stroke-linecap="round"/>
+  <path d="M655 515C701 486 742 478 788 486" stroke="#FFFCF6" stroke-width="16" stroke-linecap="round"/>
+  <path d="M1075 414C1110 392 1149 383 1192 386" stroke="#204A37" stroke-width="14" stroke-linecap="round"/>
+  <path d="M1118 472C1160 443 1205 431 1255 432" stroke="#204A37" stroke-width="14" stroke-linecap="round"/>
+  <path d="M1168 536C1216 501 1269 485 1327 486" stroke="#204A37" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="345" cy="720" r="18" fill="#FFFCF6"/>
+  <circle cx="408" cy="684" r="10" fill="#FFFCF6"/>
+  <circle cx="470" cy="650" r="12" fill="#FFFCF6"/>
+</svg>
