@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EnvRisk
 
-## Getting Started
+EnvRisk es una aplicación construida con Next.js para consultas y advertencias sobre riesgos medioambientales en Antioquia. La interfaz actual incluye:
 
-First, run the development server:
+- Una landing page editorial en modo claro para presentar el producto.
+- Una pantalla de chat para consultas sobre deslizamientos, sismos, incendios y otras amenazas del territorio.
+- Un flujo visual preparado para integrar IA generativa, aunque por ahora el chat usa respuestas locales de prueba.
+
+## Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- ESLint
+- Bun como gestor recomendado
+
+## Ejecutar el proyecto
+
+Instala dependencias con el gestor que uses normalmente. En este repositorio se recomienda Bun.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+bun install
+```
+
+Inicia el entorno de desarrollo:
+
+```bash
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+La aplicación quedará disponible en [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts útiles
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+bun dev
+bun run build
+bun start
+bun run lint
+npx tsc --noEmit
+```
 
-## Learn More
+## Estructura principal
 
-To learn more about Next.js, take a look at the following resources:
+- `app/page.tsx`: landing principal de EnvRisk.
+- `app/chat/page.tsx`: interfaz del chatbot.
+- `app/components/hero-carousel.tsx`: carrusel visual de la landing.
+- `app/globals.css`: variables y estilos globales.
+- `public/`: assets estáticos, incluyendo ilustraciones SVG.
+- `GUIDE.md`: guía corta del proyecto y decisiones actuales de implementación.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Calidad
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Para cambios de código en este repositorio, la validación mínima esperada es:
 
-## Deploy on Vercel
+```bash
+bun run lint
+npx tsc --noEmit
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Si en el futuro se modifica algo dentro de `convex/`, también se debe ejecutar:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npx convex codegen
+```
+
+## Estado actual
+
+- La landing redirige al chat desde su CTA principal.
+- El chat tiene historial y prompts sugeridos en paneles laterales colapsables.
+- Los mensajes del usuario y del asistente ya funcionan con estado local.
+- La respuesta del asistente aún es fija mientras no exista integración real con IA.
