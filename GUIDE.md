@@ -5,6 +5,7 @@ This project is a small Next.js 16 App Router application with TypeScript, React
 
 ## Structure
 - `app/`: routes, layout, and global styles.
+- `app/icon.svg`: main app icon asset consumed by Next.js metadata routing.
 - `app/chat/page.tsx`: chatbot experience with the same light editorial visual system as the landing.
 - `public/`: static assets.
 - Root configs: `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `postcss.config.mjs`.
@@ -15,6 +16,8 @@ This project is a small Next.js 16 App Router application with TypeScript, React
 - If a `convex/` directory is added or modified later, run `npx convex codegen`.
 - Keep React components in TypeScript, prefer the `@/*` alias, and follow the existing formatting style.
 - Preserve the current visual system unless the task requires a redesign: light backgrounds, restrained motion, serif display typography, and dark green as the primary accent.
+- The app icon should keep the same editorial identity: dark green base, ivory contrast, and environmental-risk cues that stay legible at small sizes.
+- The landing top bar should show the app icon alongside the `EnvRisk` wordmark to reinforce branding in the main entry point.
 - The landing copy should reflect the app idea directly: generative AI support for environmental risk awareness, questions, and warnings in Antioquia, with examples such as landslides, earthquakes, and fires.
 - Favor a prevention-and-guidance narrative over a generic institutional-services narrative.
 - The landing header CTA `Conversemos` should route directly to `/chat`.

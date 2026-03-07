@@ -16,6 +16,9 @@ const cormorantGaramond = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "EnvRisk",
   description: "EnvRisk es una app de IA generativa para consultas y advertencias sobre riesgos medioambientales en Antioquia.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

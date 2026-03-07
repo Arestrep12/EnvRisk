@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { HeroCarousel } from "./components/hero-carousel";
 
@@ -9,13 +10,25 @@ export default function Home() {
 
             <section className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 pb-12 pt-6 sm:px-10 lg:px-16">
                 <header className="fade-up flex items-center justify-between border-b border-[var(--line)] pb-5">
-                    <div>
-                        <p className="text-xs uppercase tracking-[0.42em] text-[var(--muted)]">
-                            Antioquia
-                        </p>
-                        <p className="mt-2 font-serif text-2xl text-[var(--brand)]">
-                            EnvRisk
-                        </p>
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-[1.35rem] border border-[var(--line)] bg-white/80 shadow-[0_16px_35px_rgba(29,78,58,0.08)]">
+                            <Image
+                                src="/icon.svg"
+                                alt="EnvRisk"
+                                width={40}
+                                height={40}
+                                className="h-10 w-10"
+                                priority
+                            />
+                        </div>
+                        <div>
+                            <p className="text-xs uppercase tracking-[0.42em] text-[var(--muted)]">
+                                Antioquia
+                            </p>
+                            <p className="mt-2 font-serif text-2xl text-[var(--brand)]">
+                                EnvRisk
+                            </p>
+                        </div>
                     </div>
                     <Link
                         className="rounded-full bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[var(--brand-strong)] hover:shadow-[0_18px_40px_rgba(29,78,58,0.18)]"
