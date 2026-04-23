@@ -4,7 +4,7 @@ EnvRisk es una aplicación construida con Next.js para consultas y advertencias 
 
 - Una landing page editorial en modo claro para presentar el producto.
 - Una pantalla de chat para consultas sobre deslizamientos, sismos, incendios y otras amenazas del territorio.
-- Un flujo visual preparado para integrar IA generativa, aunque por ahora el chat usa respuestas locales de prueba.
+- Un flujo de chat conectado a Groq para responder con IA generativa vanilla, sin integraciones externas de clima ni de emergencias.
 
 ## Stack
 
@@ -30,6 +30,17 @@ bun dev
 ```
 
 La aplicación quedará disponible en [http://localhost:3000](http://localhost:3000).
+
+## Variables de entorno
+
+Crea un archivo `.env.local` con al menos esta configuracion:
+
+```bash
+GROQ_API_KEY=tu_api_key
+GROQ_MODEL=llama-3.3-70b-versatile
+```
+
+`GROQ_MODEL` es opcional. Si no se define, la app usa `llama-3.3-70b-versatile`.
 
 ## Scripts útiles
 
@@ -69,5 +80,6 @@ npx convex codegen
 
 - La landing redirige al chat desde su CTA principal.
 - El chat tiene historial y prompts sugeridos en paneles laterales colapsables.
-- Los mensajes del usuario y del asistente ya funcionan con estado local.
-- La respuesta del asistente aún es fija mientras no exista integración real con IA.
+- Los mensajes del usuario y del asistente mantienen el contexto conversacional en cliente.
+- La respuesta del asistente se genera desde un endpoint de servidor que delega la inferencia a Groq.
+- El asistente no consulta fuentes en vivo ni APIs externas; responde solo con capacidad general del modelo.
