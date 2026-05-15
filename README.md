@@ -54,10 +54,23 @@ bun run lint
 npx tsc --noEmit
 ```
 
+## Tools climáticas por HTTP
+
+La tool climática puede probarse directamente sin pasar por el modelo:
+
+```bash
+curl -sS http://localhost:3000/api/tools/climate \
+  -H 'Content-Type: application/json' \
+  --data '{"message":"Dime cual es la precipitación en Jardín 13 de mayo de 2026"}'
+```
+
+El endpoint devuelve el contexto usado por el chat y, cuando aplica, una `directAnswer` determinística.
+
 ## Estructura principal
 
 - `app/page.tsx`: landing principal de EnvRisk.
 - `app/chat/page.tsx`: interfaz del chatbot.
+- `app/api/tools/climate/route.ts`: endpoint HTTP para ejecutar la tool climática directamente.
 - `app/components/hero-carousel.tsx`: carrusel visual de la landing.
 - `app/globals.css`: variables y estilos globales.
 - `lib/envrisk-tools/weather.ts`: herramientas server-side sin API key para contexto climático con Open-Meteo, NASA POWER e IDEAM/datos.gov.co.

@@ -104,6 +104,25 @@ export type ClimateToolResult = {
   directAnswer?: string;
 };
 
+export type ClimateToolInput = {
+  message?: string;
+  variable?: "precipitation" | "temperature" | "weather" | "wind" | "humidity" | "stations" | "alerts";
+  location?: string;
+  date?: string;
+  timeframe?: "current" | "daily" | "historical" | "forecast";
+  scope?: string;
+};
+
+type NormalizedClimateToolInput = {
+  message: string;
+  variable?: ClimateToolInput["variable"];
+  location: string;
+  date?: string | null;
+  timeframe?: ClimateToolInput["timeframe"];
+  scope?: string;
+  structured: boolean;
+};
+
 const defaultLocation = "Medellin, Antioquia, Colombia";
 const timezone = "America/Bogota";
 const toolFetchTimeoutMs = 6000;
@@ -224,6 +243,8 @@ function extractLocation(message: string) {
     )[0]
     .replace(dateIntentPattern, "")
     .replace(/[?!.:,;]+$/u, "")
+    .replace(/\ben\s*$/iu, "")
+    .replace(/\b(?:el|la)\s*$/iu, "")
     .replace(/\s+(?:en|en los|en las|los|las|el|la|y)$/iu, "")
     .replace(
       /\s+(?:hoy|mañana|manana|ayer|esta semana|la proxima semana|próxima semana)$/iu,
@@ -238,6 +259,78 @@ function extractLocation(message: string) {
   return /colombia|antioquia/iu.test(location)
     ? location
     : `${location}, Antioquia, Colombia`;
+}
+
+function normalizeLocation(location: string) {
+  const trimmedLocation = location.trim();
+
+  if (!trimmedLocation) {
+    return defaultLocation;
+  }
+
+  return /colombia|antioquia/iu.test(trimmedLocation)
+    ? trimmedLocation
+    : `${trimmedLocation}, Antioquia, Colombia`;
+}
+
+function isValidIsoDate(date: string) {
+  return /^\d{4}-\d{2}-\d{2}$/u.test(date);
+}
+
+function normalizeClimateToolInput(
+  input: string | ClimateToolInput,
+): NormalizedClimateToolInput | null {
+  if (typeof input === "string") {
+    if (!input.trim() || !hasClimateIntent(input)) {
+      return null;
+    }
+
+    return {
+      message: input,
+      location: extractLocation(input),
+      date: parseRequestedDate(input),
+      structured: false,
+    };
+  }
+
+  const location =
+    typeof input.location === "string" && input.location.trim()
+      ? normalizeLocation(input.location)
+      : input.message
+        ? extractLocation(input.message)
+        : defaultLocation;
+  const date =
+    typeof input.date === "string" && isValidIsoDate(input.date)
+      ? input.date
+      : input.message
+        ? parseRequestedDate(input.message)
+        : null;
+  const variableText = input.variable
+    ? {
+        precipitation: "precipitacion",
+        temperature: "temperatura",
+        weather: "clima",
+        wind: "viento",
+        humidity: "humedad",
+        stations: "estaciones meteorologicas",
+        alerts: "alertas climaticas",
+      }[input.variable]
+    : "clima";
+  const timeframeText = input.timeframe ? ` ${input.timeframe}` : "";
+  const dateText = date ? ` el ${date}` : "";
+  const scopeText = input.scope ? `, ${input.scope}` : "";
+
+  return {
+    message:
+      input.message?.trim() ||
+      `${variableText}${timeframeText} en ${location}${scopeText}${dateText}`,
+    variable: input.variable,
+    location,
+    date,
+    timeframe: input.timeframe,
+    scope: input.scope,
+    structured: true,
+  };
 }
 
 async function fetchJson<T>(url: URL) {
@@ -639,15 +732,17 @@ function getIdeamPrecipitationForDate(
 }
 
 function buildDirectPrecipitationAnswer(
-  message: string,
+  input: NormalizedClimateToolInput,
   context: ClimateToolContext,
 ) {
-  const normalized = normalizeText(message);
-  const requestedDate = parseRequestedDate(message);
+  const normalized = normalizeText(input.message);
+  const requestedDate = input.date;
 
   if (
     !requestedDate ||
-    (!normalized.includes("precipitacion") && !normalized.includes("lluvia"))
+    (input.variable !== "precipitation" &&
+      !normalized.includes("precipitacion") &&
+      !normalized.includes("lluvia"))
   ) {
     return undefined;
   }
@@ -703,17 +798,23 @@ function buildDirectPrecipitationAnswer(
   return lines.join("\n");
 }
 
-async function buildClimateData(message: string) {
-  const requestedLocation = extractLocation(message);
-  const requestedDate = parseRequestedDate(message);
+async function buildClimateData(input: NormalizedClimateToolInput) {
+  const requestedLocation = input.location;
+  const requestedDate = input.date;
   const location = await geocodeLocation(requestedLocation);
 
   if (!location) {
-    return `
+    const unresolvedMessage = `
 Contexto de herramientas externas:
 - Se detecto una consulta climatica, pero no fue posible resolver la ubicacion "${requestedLocation}" con Open-Meteo Geocoding.
 - Pide al usuario municipio, corregimiento o coordenadas mas concretas.
 `.trim();
+
+    return {
+      context: unresolvedMessage,
+      directAnswer:
+        "No pude resolver esa ubicacion dentro de Antioquia con las herramientas disponibles. Indica el municipio, corregimiento, vereda, punto de referencia o coordenadas para volver a consultar.",
+    };
   }
 
   const municipality = location.name.split(",")[0]?.trim() || "Medellin";
@@ -721,7 +822,7 @@ Contexto de herramientas externas:
   const [forecast, historical, nasaPower, ideamPrecipitation, ideamStations] =
     await Promise.all([
     optionalToolResult(getForecast(location.latitude, location.longitude)),
-    hasHistoricalIntent(message)
+    input.timeframe === "historical" || Boolean(requestedDate) || hasHistoricalIntent(input.message)
       ? optionalToolResult(
           getHistoricalWeather(
             location.latitude,
@@ -774,33 +875,36 @@ ${formatSourceCoverage(context)}
 Instrucciones para responder:
 - Usa estos datos solo si son relevantes para la pregunta del usuario.
 - Si esta seccion contiene datos numericos utiles para responder, responde con esos datos y no digas que no tienes acceso.
+- Si la ubicacion resuelta es un municipio de Antioquia, no pidas coordenadas para responder; usa la ubicacion municipal como aproximacion operativa.
+- Si el usuario dijo casco urbano, cabecera municipal, centro o el municipio, interpreta que se refiere al punto municipal resuelto por la herramienta.
 - Antes de responder una consulta climatica puntual o historica, revisa la cobertura de herramientas ejecutadas.
 - Si hay mas de una fuente con datos relevantes, compara las fuentes y menciona diferencias importantes.
 - Si solo una fuente tiene el dato exacto solicitado, dilo explicitamente: "solo encontre este dato exacto en [fuente]".
 - Menciona las fuentes usadas de forma breve: Open-Meteo, NASA POWER e IDEAM/datos.gov.co, segun aplique.
+- No recomiendes consultar manualmente las mismas APIs si ya hay datos en este contexto; responde con lo encontrado.
 - No presentes estos datos como alerta oficial de emergencia.
 - No presentes el historico meteorologico como registro confirmado de danos, desastres o sucesos oficiales.
 - Si el usuario pide alertas oficiales, recomienda verificar IDEAM, DAGRAN o autoridades locales segun la zona.
 `.trim();
 }
 
-export async function getClimateContextForMessage(message: string) {
-  if (!hasClimateIntent(message)) {
+export async function getClimateContextForMessage(input: string | ClimateToolInput) {
+  const normalizedInput = normalizeClimateToolInput(input);
+
+  if (!normalizedInput) {
     return null;
   }
 
   try {
-    const climateData = await buildClimateData(message);
+    const climateData = await buildClimateData(normalizedInput);
 
-    if (typeof climateData === "string") {
-      return {
-        context: climateData,
-      };
+    if ("context" in climateData) {
+      return climateData;
     }
 
     return {
       context: formatClimateToolContext(climateData),
-      directAnswer: buildDirectPrecipitationAnswer(message, climateData),
+      directAnswer: buildDirectPrecipitationAnswer(normalizedInput, climateData),
     };
   } catch (error) {
     const detail = error instanceof Error ? error.message : "error desconocido";
@@ -813,4 +917,8 @@ Contexto de herramientas externas:
 `.trim(),
     };
   }
+}
+
+export async function runClimateTool(input: string | ClimateToolInput) {
+  return getClimateContextForMessage(input);
 }

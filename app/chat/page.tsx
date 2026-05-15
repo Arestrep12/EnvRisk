@@ -72,6 +72,17 @@ export default function ChatPage() {
   ]);
   const [isLoading, setIsLoading] = useState(false);
 
+  function resetChat() {
+    setPrompt("");
+    setMessages([
+      {
+        role: "assistant",
+        content: stockReply,
+      },
+    ]);
+    setIsLoading(false);
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -191,6 +202,7 @@ export default function ChatPage() {
 
                 <button
                   type="button"
+                  onClick={resetChat}
                   className="mt-5 rounded-[1.2rem] bg-[var(--brand)] px-4 py-3 text-left text-sm font-medium text-white transition-colors duration-300 hover:bg-[var(--brand-strong)]"
                 >
                   Nuevo chat
@@ -244,7 +256,7 @@ export default function ChatPage() {
                         : "border border-[var(--line)] bg-white text-[var(--brand)]"
                     }`}
                   >
-                    <p className="text-sm leading-7 sm:text-base">
+                    <p className="whitespace-pre-line text-sm leading-7 sm:text-base">
                       {message.content}
                     </p>
                   </article>

@@ -35,6 +35,9 @@ This project is a small Next.js 16 App Router application with TypeScript, React
 - Configure Groq with `GROQ_API_KEY` and `GROQ_MODEL`; the model must come from the environment and should not be hardcoded in application code.
 - Weather context uses Open-Meteo Forecast/Archive/Geocoding, NASA POWER, and IDEAM datasets on datos.gov.co without API keys. Treat those readings as weather data, not official emergency alerts or confirmed disaster/event records.
 - External weather source calls and the Groq request must keep explicit timeouts so Vercel does not leave the chat stuck in the loading state.
+- The climate tool is exposed at `POST /api/tools/climate` so it can be tested with curl independently from Groq.
+- For climate prompts, natural-language wording should be normalized before asking for clarification. A municipality in Antioquia, or a clarification like "casco urbano" or "cabecera municipal", is enough to run the tools.
+- `app/api/chat/route.ts` should not classify climate intent with local keyword heuristics. The model receives tool definitions and decides when to call `get_climate_context`; the route only executes requested tools and handles deterministic `directAnswer` results.
 - The chat layout can use two collapsible side panels: chat history on the left and suggested prompts on the right, both independently showable and hideable around the central conversation pane.
 - When both side panels are visible, the chat layout should use the full viewport width so those panels sit near the outer edges and the main conversation area keeps as much width as possible.
 - Showing or hiding side panels must not push the main chat pane sideways; the center column should stay visually anchored while the side panels appear independently at the edges.
