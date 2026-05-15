@@ -520,6 +520,31 @@ ${stationSummary}
 `.trim();
 }
 
+function formatSourceCoverage(context: ClimateToolContext) {
+  const coverage = [
+    context.current || context.daily?.time?.length
+      ? "Open-Meteo Forecast: disponible"
+      : "Open-Meteo Forecast: sin datos",
+    context.historical?.time?.length
+      ? "Open-Meteo Archive: disponible"
+      : "Open-Meteo Archive: sin datos o no solicitado",
+    context.nasaPower?.properties?.parameter?.PRECTOTCORR
+      ? "NASA POWER: disponible"
+      : "NASA POWER: sin datos",
+    context.ideamPrecipitation?.length
+      ? "IDEAM precipitacion: disponible"
+      : "IDEAM precipitacion: sin observaciones recientes para el municipio",
+    context.ideamStations?.length
+      ? "IDEAM estaciones: disponible"
+      : "IDEAM estaciones: sin estaciones encontradas",
+  ];
+
+  return `
+Cobertura de herramientas ejecutadas:
+${coverage.map((item) => `- ${item}.`).join("\n")}
+`.trim();
+}
+
 async function buildClimateContext(message: string) {
   const requestedLocation = extractLocation(message);
   const location = await geocodeLocation(requestedLocation);
@@ -577,10 +602,14 @@ ${formatDailyForecast(context)}
 ${formatHistoricalWeather(context)}
 ${formatNasaPowerContext(context)}
 ${formatIdeamContext(context)}
+${formatSourceCoverage(context)}
 
 Instrucciones para responder:
 - Usa estos datos solo si son relevantes para la pregunta del usuario.
 - Si esta seccion contiene datos numericos utiles para responder, responde con esos datos y no digas que no tienes acceso.
+- Antes de responder una consulta climatica puntual o historica, revisa la cobertura de herramientas ejecutadas.
+- Si hay mas de una fuente con datos relevantes, compara las fuentes y menciona diferencias importantes.
+- Si solo una fuente tiene el dato exacto solicitado, dilo explicitamente: "solo encontre este dato exacto en [fuente]".
 - Menciona las fuentes usadas de forma breve: Open-Meteo, NASA POWER e IDEAM/datos.gov.co, segun aplique.
 - No presentes estos datos como alerta oficial de emergencia.
 - No presentes el historico meteorologico como registro confirmado de danos, desastres o sucesos oficiales.
