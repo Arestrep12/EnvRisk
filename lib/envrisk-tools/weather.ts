@@ -580,6 +580,7 @@ ${formatIdeamContext(context)}
 
 Instrucciones para responder:
 - Usa estos datos solo si son relevantes para la pregunta del usuario.
+- Si esta seccion contiene datos numericos utiles para responder, responde con esos datos y no digas que no tienes acceso.
 - Menciona las fuentes usadas de forma breve: Open-Meteo, NASA POWER e IDEAM/datos.gov.co, segun aplique.
 - No presentes estos datos como alerta oficial de emergencia.
 - No presentes el historico meteorologico como registro confirmado de danos, desastres o sucesos oficiales.
@@ -599,7 +600,7 @@ export async function getClimateContextForMessage(message: string) {
 
     return `
 Contexto de herramientas externas:
-- Se detecto una consulta climatica, pero Open-Meteo no respondio correctamente (${detail}).
+- Se detecto una consulta climatica, pero las herramientas climaticas no respondieron correctamente (${detail}).
 - Responde con orientacion general y aclara que no hay datos climaticos verificados disponibles para esta respuesta.
 `.trim();
   }
