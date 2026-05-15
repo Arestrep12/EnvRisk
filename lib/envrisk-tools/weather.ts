@@ -236,9 +236,7 @@ async function geocodeLocation(location: string) {
       (item) =>
         item.country === "Colombia" &&
         normalizeText(item.admin1 ?? "") === "antioquia",
-    ) ??
-    data.results?.find((item) => item.country === "Colombia") ??
-    data.results?.[0];
+    );
 
   if (
     !result ||
