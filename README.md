@@ -4,7 +4,7 @@ EnvRisk es una aplicación construida con Next.js para consultas y advertencias 
 
 - Una landing page editorial en modo claro para presentar el producto.
 - Una pantalla de chat para consultas sobre deslizamientos, sismos, incendios y otras amenazas del territorio.
-- Un flujo de chat conectado a Groq para responder con IA generativa vanilla, sin integraciones externas de clima ni de emergencias.
+- Un flujo de chat conectado a Groq con contexto climático server-side desde Open-Meteo, sin llaves adicionales.
 
 ## Stack
 
@@ -42,6 +42,8 @@ GROQ_MODEL=llama-3.3-70b-versatile
 
 `GROQ_MODEL` es opcional. Si no se define, la app usa `llama-3.3-70b-versatile`.
 
+Las consultas climáticas usan Open-Meteo Forecast, Archive y Geocoding APIs, NASA POWER, y datasets de IDEAM en datos.gov.co sin API key. Estos datos no reemplazan alertas oficiales, reportes de daños ni registros institucionales de IDEAM, DAGRAN o autoridades locales.
+
 ## Scripts útiles
 
 ```bash
@@ -58,6 +60,7 @@ npx tsc --noEmit
 - `app/chat/page.tsx`: interfaz del chatbot.
 - `app/components/hero-carousel.tsx`: carrusel visual de la landing.
 - `app/globals.css`: variables y estilos globales.
+- `lib/envrisk-tools/weather.ts`: herramientas server-side sin API key para contexto climático con Open-Meteo, NASA POWER e IDEAM/datos.gov.co.
 - `public/`: assets estáticos, incluyendo ilustraciones SVG.
 - `GUIDE.md`: guía corta del proyecto y decisiones actuales de implementación.
 
@@ -81,5 +84,5 @@ npx convex codegen
 - La landing redirige al chat desde su CTA principal.
 - El chat tiene historial y prompts sugeridos en paneles laterales colapsables.
 - Los mensajes del usuario y del asistente mantienen el contexto conversacional en cliente.
-- La respuesta del asistente se genera desde un endpoint de servidor que delega la inferencia a Groq.
-- El asistente no consulta fuentes en vivo ni APIs externas; responde solo con capacidad general del modelo.
+- La respuesta del asistente se genera desde un endpoint de servidor que puede enriquecer consultas climáticas con Open-Meteo antes de delegar la redacción a Groq.
+- El asistente no consulta alertas oficiales en vivo; para emergencias debe remitir a fuentes institucionales.

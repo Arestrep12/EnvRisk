@@ -30,9 +30,10 @@ This project is a small Next.js 16 App Router application with TypeScript, React
 - Decorative SVG elements should keep safe margins from the canvas edges so circles and icons are never visually cut off.
 - Chat surfaces should preserve the landing look: light canvas, soft borders, serif hierarchy, and a bottom composer with a visible attachment action using a paperclip icon.
 - The chat page should fit within the viewport without page scroll; keep only the suggested prompts panel and a clean interaction surface with the composer anchored at the bottom.
-- The chat now uses a local Next.js server route at `app/api/chat/route.ts` to call Groq with a vanilla conversational setup and no external live-data tools.
+- The chat uses a local Next.js server route at `app/api/chat/route.ts` to call Groq and can enrich weather-related prompts with server-side Open-Meteo context.
 - Keep the initial assistant greeting `Bienvenido, ¿En qué te puedo ayudar?`, preserve the existing message styling, and send subsequent turns to Groq while maintaining conversation context.
 - Configure Groq with `GROQ_API_KEY`; `GROQ_MODEL` is optional and currently defaults to `llama-3.3-70b-versatile`.
+- Weather context uses Open-Meteo Forecast/Archive/Geocoding, NASA POWER, and IDEAM datasets on datos.gov.co without API keys. Treat those readings as weather data, not official emergency alerts or confirmed disaster/event records.
 - The chat layout can use two collapsible side panels: chat history on the left and suggested prompts on the right, both independently showable and hideable around the central conversation pane.
 - When both side panels are visible, the chat layout should use the full viewport width so those panels sit near the outer edges and the main conversation area keeps as much width as possible.
 - Showing or hiding side panels must not push the main chat pane sideways; the center column should stay visually anchored while the side panels appear independently at the edges.

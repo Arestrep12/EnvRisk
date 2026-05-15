@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { ChatMessage } from "@/lib/chat";
+import { getClimateContextForMessage } from "@/lib/envrisk-tools/weather";
 
 const groqApiUrl = "https://api.groq.com/openai/v1/chat/completions";
 const groqModel = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
@@ -7,8 +8,10 @@ const groqModel = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
 const systemPrompt = `
 Eres el asistente de EnvRisk.
 Responde siempre en espanol claro y directo.
-No uses herramientas, no cites fuentes externas ni inventes que tienes datos en tiempo real.
-Si el usuario pregunta por clima, alertas activas o emergencias en curso, aclara que no tienes acceso a informacion en vivo.
+Puedes usar contexto consultado por herramientas server-side cuando este disponible.
+No inventes datos en tiempo real, alertas activas, fuentes externas ni sucesos pasados que no esten en el contexto.
+Si el usuario pregunta por clima y recibes contexto de herramientas, usalo y cita las fuentes disponibles de forma breve.
+Si el usuario pregunta por alertas activas o emergencias en curso, aclara que los datos climaticos no son alertas oficiales y recomienda verificar IDEAM, DAGRAN o autoridades locales segun la zona.
 Ayuda con orientacion general, explicaciones, prevencion y siguientes pasos prudentes.
 `.trim();
 
@@ -71,6 +74,11 @@ export async function POST(request: Request) {
   }
 
   try {
+    const lastUserMessage = messages.findLast((message) => message.role === "user");
+    const climateContext = lastUserMessage
+      ? await getClimateContextForMessage(lastUserMessage.content)
+      : null;
+
     const groqResponse = await fetch(groqApiUrl, {
       method: "POST",
       headers: {
@@ -85,6 +93,14 @@ export async function POST(request: Request) {
             role: "system",
             content: systemPrompt,
           },
+          ...(climateContext
+            ? [
+                {
+                  role: "system",
+                  content: climateContext,
+                },
+              ]
+            : []),
           ...messages,
         ],
       }),
