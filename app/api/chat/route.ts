@@ -4,6 +4,9 @@ import { getClimateContextForMessage } from "@/lib/envrisk-tools/weather";
 
 const groqApiUrl = "https://api.groq.com/openai/v1/chat/completions";
 const groqModel = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
+const groqFetchTimeoutMs = 25000;
+
+export const maxDuration = 30;
 
 const systemPrompt = `
 Eres el asistente de EnvRisk.
@@ -88,8 +91,10 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${groqApiKey}`,
         "Content-Type": "application/json",
       },
+      signal: AbortSignal.timeout(groqFetchTimeoutMs),
       body: JSON.stringify({
         model: groqModel,
+        max_tokens: 900,
         temperature: 0.3,
         messages: [
           {
@@ -139,9 +144,14 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ message: content });
-  } catch {
+  } catch (error) {
+    const errorMessage =
+      error instanceof DOMException && error.name === "TimeoutError"
+        ? "La generacion tardo mas de lo permitido. Intenta una consulta mas especifica."
+        : "No fue posible conectar con Groq.";
+
     return NextResponse.json(
-      { error: "No fue posible conectar con Groq." },
+      { error: errorMessage },
       { status: 502 },
     );
   }

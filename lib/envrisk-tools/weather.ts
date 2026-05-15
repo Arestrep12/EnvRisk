@@ -101,6 +101,7 @@ type ClimateToolContext = {
 
 const defaultLocation = "Medellin, Antioquia, Colombia";
 const timezone = "America/Bogota";
+const toolFetchTimeoutMs = 6000;
 
 const climateIntentWords = [
   "clima",
@@ -137,6 +138,9 @@ const historicalIntentWords = [
   "ultimas semanas",
 ];
 
+const dateIntentPattern =
+  /\b\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?:\s+de\s+\d{4})?\b|\b\d{4}-\d{2}-\d{2}\b/iu;
+
 function normalizeText(value: string) {
   return value
     .normalize("NFD")
@@ -153,7 +157,10 @@ function hasClimateIntent(message: string) {
 function hasHistoricalIntent(message: string) {
   const normalized = normalizeText(message);
 
-  return historicalIntentWords.some((word) => normalized.includes(word));
+  return (
+    historicalIntentWords.some((word) => normalized.includes(word)) ||
+    dateIntentPattern.test(message)
+  );
 }
 
 function extractLocation(message: string) {
@@ -169,6 +176,7 @@ function extractLocation(message: string) {
     .split(
       /\b(?:hoy|mañana|manana|ayer|esta semana|la proxima semana|próxima semana|en los ultimos dias|en los últimos días|ultimos dias|últimos días|ultimas semanas|últimas semanas|y en|durante)\b/iu,
     )[0]
+    .replace(dateIntentPattern, "")
     .replace(/[?!.:,;]+$/u, "")
     .replace(/\s+(?:en|en los|en las|los|las|el|la|y)$/iu, "")
     .replace(
@@ -192,6 +200,7 @@ async function fetchJson<T>(url: URL) {
       Accept: "application/json",
       "User-Agent": "EnvRisk/0.1 weather context",
     },
+    signal: AbortSignal.timeout(toolFetchTimeoutMs),
     next: {
       revalidate: 900,
     },
@@ -527,7 +536,7 @@ Contexto de herramientas externas:
   const department = location.name.split(",")[2]?.trim() || "Antioquia";
   const [forecast, historical, nasaPower, ideamPrecipitation, ideamStations] =
     await Promise.all([
-    getForecast(location.latitude, location.longitude),
+    optionalToolResult(getForecast(location.latitude, location.longitude)),
     hasHistoricalIntent(message)
       ? optionalToolResult(getHistoricalWeather(location.latitude, location.longitude))
       : Promise.resolve(null),
@@ -543,10 +552,10 @@ Contexto de herramientas externas:
     latitude: location.latitude,
     longitude: location.longitude,
     generatedAt: new Date().toISOString(),
-    current: forecast.current,
-    currentUnits: forecast.current_units,
-    daily: forecast.daily,
-    dailyUnits: forecast.daily_units,
+    current: forecast?.current,
+    currentUnits: forecast?.current_units,
+    daily: forecast?.daily,
+    dailyUnits: forecast?.daily_units,
     historical: historical?.daily,
     historicalUnits: historical?.daily_units,
     nasaPower: nasaPower ?? undefined,

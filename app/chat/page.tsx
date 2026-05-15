@@ -59,6 +59,8 @@ const chatHistory = [
   "Revisión de boletín comunitario",
 ];
 
+const chatRequestTimeoutMs = 32000;
+
 export default function ChatPage() {
   const [prompt, setPrompt] = useState("");
   const [showHistoryPanel, setShowHistoryPanel] = useState(true);
@@ -89,15 +91,22 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => {
+        controller.abort();
+      }, chatRequestTimeoutMs);
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        signal: controller.signal,
         body: JSON.stringify({
           messages: nextMessages,
         }),
       });
+      window.clearTimeout(timeout);
 
       const data = (await response.json()) as {
         error?: string;
@@ -115,7 +124,9 @@ export default function ChatPage() {
       ]);
     } catch (error) {
       const fallbackMessage =
-        error instanceof Error
+        error instanceof DOMException && error.name === "AbortError"
+          ? "La consulta tardo mas de lo esperado. Intenta pedir un municipio y una fecha concreta."
+          : error instanceof Error
           ? error.message
           : "Ocurrio un error inesperado al consultar la IA.";
 
