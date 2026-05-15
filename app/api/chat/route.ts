@@ -3,7 +3,6 @@ import type { ChatMessage } from "@/lib/chat";
 import { getClimateContextForMessage } from "@/lib/envrisk-tools/weather";
 
 const groqApiUrl = "https://api.groq.com/openai/v1/chat/completions";
-const groqModel = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
 const groqFetchTimeoutMs = 25000;
 
 export const maxDuration = 30;
@@ -40,11 +39,21 @@ function isChatMessage(value: unknown): value is ChatMessage {
 
 export async function POST(request: Request) {
   const groqApiKey = process.env.GROQ_API_KEY;
+  const groqModel = process.env.GROQ_MODEL;
 
   if (!groqApiKey) {
     return NextResponse.json(
       {
         error: "Falta configurar GROQ_API_KEY en el entorno del servidor.",
+      },
+      { status: 500 },
+    );
+  }
+
+  if (!groqModel) {
+    return NextResponse.json(
+      {
+        error: "Falta configurar GROQ_MODEL en el entorno del servidor.",
       },
       { status: 500 },
     );
@@ -84,9 +93,13 @@ export async function POST(request: Request) {
 
   try {
     const lastUserMessage = messages.findLast((message) => message.role === "user");
-    const climateContext = lastUserMessage
+    const climateResult = lastUserMessage
       ? await getClimateContextForMessage(lastUserMessage.content)
       : null;
+
+    if (climateResult?.directAnswer) {
+      return NextResponse.json({ message: climateResult.directAnswer });
+    }
 
     const groqResponse = await fetch(groqApiUrl, {
       method: "POST",
@@ -104,11 +117,11 @@ export async function POST(request: Request) {
             role: "system",
             content: systemPrompt,
           },
-          ...(climateContext
+          ...(climateResult
             ? [
                 {
                   role: "system",
-                  content: climateContext,
+                  content: climateResult.context,
                 },
               ]
             : []),

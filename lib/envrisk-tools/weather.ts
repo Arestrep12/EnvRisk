@@ -99,9 +99,29 @@ type ClimateToolContext = {
   ideamStations?: IdeamStation[];
 };
 
+export type ClimateToolResult = {
+  context: string;
+  directAnswer?: string;
+};
+
 const defaultLocation = "Medellin, Antioquia, Colombia";
 const timezone = "America/Bogota";
 const toolFetchTimeoutMs = 6000;
+const monthByName: Record<string, string> = {
+  enero: "01",
+  febrero: "02",
+  marzo: "03",
+  abril: "04",
+  mayo: "05",
+  junio: "06",
+  julio: "07",
+  agosto: "08",
+  septiembre: "09",
+  setiembre: "09",
+  octubre: "10",
+  noviembre: "11",
+  diciembre: "12",
+};
 
 const climateIntentWords = [
   "clima",
@@ -161,6 +181,32 @@ function hasHistoricalIntent(message: string) {
     historicalIntentWords.some((word) => normalized.includes(word)) ||
     dateIntentPattern.test(message)
   );
+}
+
+function parseRequestedDate(message: string) {
+  const isoMatch = message.match(/\b(\d{4})-(\d{2})-(\d{2})\b/u);
+
+  if (isoMatch?.[0]) {
+    return isoMatch[0];
+  }
+
+  const dateMatch = message.match(
+    /\b(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?:\s+de\s+(\d{4}))?\b/iu,
+  );
+
+  if (!dateMatch?.[1] || !dateMatch[2]) {
+    return null;
+  }
+
+  const year = dateMatch[3] ?? String(new Date().getFullYear());
+  const month = monthByName[normalizeText(dateMatch[2])];
+  const day = dateMatch[1].padStart(2, "0");
+
+  if (!month) {
+    return null;
+  }
+
+  return `${year}-${month}-${day}`;
 }
 
 function extractLocation(message: string) {
@@ -296,15 +342,19 @@ async function getForecast(latitude: number, longitude: number) {
   return fetchJson<ForecastResponse>(url);
 }
 
-async function getHistoricalWeather(latitude: number, longitude: number) {
+async function getHistoricalWeather(
+  latitude: number,
+  longitude: number,
+  requestedDate?: string | null,
+) {
   const url = new URL("https://archive-api.open-meteo.com/v1/archive");
   const { startIso, endIso } = getDateRange(7);
 
   url.searchParams.set("latitude", String(latitude));
   url.searchParams.set("longitude", String(longitude));
   url.searchParams.set("timezone", timezone);
-  url.searchParams.set("start_date", startIso);
-  url.searchParams.set("end_date", endIso);
+  url.searchParams.set("start_date", requestedDate ?? startIso);
+  url.searchParams.set("end_date", requestedDate ?? endIso);
   url.searchParams.set(
     "daily",
     [
@@ -319,9 +369,14 @@ async function getHistoricalWeather(latitude: number, longitude: number) {
   return fetchJson<ForecastResponse>(url);
 }
 
-async function getNasaPowerClimate(latitude: number, longitude: number) {
+async function getNasaPowerClimate(
+  latitude: number,
+  longitude: number,
+  requestedDate?: string | null,
+) {
   const url = new URL("https://power.larc.nasa.gov/api/temporal/daily/point");
   const { startCompact, endCompact } = getDateRange(14);
+  const requestedCompact = requestedDate?.replaceAll("-", "");
 
   url.searchParams.set(
     "parameters",
@@ -330,8 +385,8 @@ async function getNasaPowerClimate(latitude: number, longitude: number) {
   url.searchParams.set("community", "AG");
   url.searchParams.set("longitude", String(longitude));
   url.searchParams.set("latitude", String(latitude));
-  url.searchParams.set("start", startCompact);
-  url.searchParams.set("end", endCompact);
+  url.searchParams.set("start", requestedCompact ?? startCompact);
+  url.searchParams.set("end", requestedCompact ?? endCompact);
   url.searchParams.set("format", "JSON");
 
   return fetchJson<NasaPowerResponse>(url);
@@ -545,8 +600,112 @@ ${coverage.map((item) => `- ${item}.`).join("\n")}
 `.trim();
 }
 
-async function buildClimateContext(message: string) {
+function getOpenMeteoPrecipitationForDate(
+  context: ClimateToolContext,
+  requestedDate: string,
+) {
+  const index = context.historical?.time?.findIndex((date) => date === requestedDate);
+
+  if (typeof index !== "number" || index < 0) {
+    return undefined;
+  }
+
+  return context.historical?.precipitation_sum?.[index];
+}
+
+function getNasaPowerPrecipitationForDate(
+  context: ClimateToolContext,
+  requestedDate: string,
+) {
+  const compactDate = requestedDate.replaceAll("-", "");
+  const precipitation =
+    context.nasaPower?.properties?.parameter?.PRECTOTCORR?.[compactDate];
+  const fillValue = context.nasaPower?.header?.fill_value ?? -999;
+
+  if (typeof precipitation !== "number" || precipitation === fillValue) {
+    return undefined;
+  }
+
+  return precipitation;
+}
+
+function getIdeamPrecipitationForDate(
+  context: ClimateToolContext,
+  requestedDate: string,
+) {
+  return (context.ideamPrecipitation ?? []).filter((row) =>
+    row.fechaobservacion?.startsWith(requestedDate),
+  );
+}
+
+function buildDirectPrecipitationAnswer(
+  message: string,
+  context: ClimateToolContext,
+) {
+  const normalized = normalizeText(message);
+  const requestedDate = parseRequestedDate(message);
+
+  if (
+    !requestedDate ||
+    (!normalized.includes("precipitacion") && !normalized.includes("lluvia"))
+  ) {
+    return undefined;
+  }
+
+  const openMeteo = getOpenMeteoPrecipitationForDate(context, requestedDate);
+  const nasaPower = getNasaPowerPrecipitationForDate(context, requestedDate);
+  const ideamRows = getIdeamPrecipitationForDate(context, requestedDate);
+  const exactSources = [
+    typeof openMeteo === "number" ? "Open-Meteo Archive" : null,
+    typeof nasaPower === "number" ? "NASA POWER" : null,
+    ideamRows.length > 0 ? "IDEAM/datos.gov.co" : null,
+  ].filter(Boolean);
+
+  if (exactSources.length === 0) {
+    return undefined;
+  }
+
+  const lines = [
+    `Para ${context.municipality}, Antioquia, el ${requestedDate}:`,
+  ];
+
+  if (typeof openMeteo === "number") {
+    lines.push(`- Open-Meteo Archive reporta ${formatNumber(openMeteo, "mm")} de precipitacion acumulada.`);
+  }
+
+  if (typeof nasaPower === "number") {
+    lines.push(`- NASA POWER reporta ${formatNumber(nasaPower, "mm/dia")} de precipitacion corregida.`);
+  }
+
+  if (ideamRows.length > 0) {
+    const ideamSummary = ideamRows
+      .slice(0, 3)
+      .map((row) => {
+        const value = row.valorobservado ?? "sin dato";
+        const unit = row.unidadmedida ?? "";
+        const station = row.nombreestacion ?? "estacion sin nombre";
+
+        return `${value}${unit} en ${station}`;
+      })
+      .join("; ");
+
+    lines.push(`- IDEAM/datos.gov.co tiene observaciones ese dia: ${ideamSummary}.`);
+  }
+
+  if (exactSources.length === 1) {
+    lines.push(`Solo encontre este dato exacto en ${exactSources[0]}, asi que debe tomarse como dato de esa fuente y no como registro institucional confirmado.`);
+  } else {
+    lines.push(`Cruce disponible: ${exactSources.join(", ")}.`);
+  }
+
+  lines.push("Estos datos climaticos no son una alerta oficial de emergencia.");
+
+  return lines.join("\n");
+}
+
+async function buildClimateData(message: string) {
   const requestedLocation = extractLocation(message);
+  const requestedDate = parseRequestedDate(message);
   const location = await geocodeLocation(requestedLocation);
 
   if (!location) {
@@ -563,14 +722,22 @@ Contexto de herramientas externas:
     await Promise.all([
     optionalToolResult(getForecast(location.latitude, location.longitude)),
     hasHistoricalIntent(message)
-      ? optionalToolResult(getHistoricalWeather(location.latitude, location.longitude))
+      ? optionalToolResult(
+          getHistoricalWeather(
+            location.latitude,
+            location.longitude,
+            requestedDate,
+          ),
+        )
       : Promise.resolve(null),
-    optionalToolResult(getNasaPowerClimate(location.latitude, location.longitude)),
+    optionalToolResult(
+      getNasaPowerClimate(location.latitude, location.longitude, requestedDate),
+    ),
     optionalToolResult(getIdeamPrecipitation(municipality, department)),
     optionalToolResult(getIdeamStations(municipality, department)),
   ]);
 
-  return formatClimateToolContext({
+  return {
     locationName: location.name,
     municipality,
     department,
@@ -586,7 +753,7 @@ Contexto de herramientas externas:
     nasaPower: nasaPower ?? undefined,
     ideamPrecipitation: ideamPrecipitation ?? [],
     ideamStations: ideamStations ?? [],
-  });
+  };
 }
 
 function formatClimateToolContext(context: ClimateToolContext) {
@@ -623,14 +790,27 @@ export async function getClimateContextForMessage(message: string) {
   }
 
   try {
-    return await buildClimateContext(message);
+    const climateData = await buildClimateData(message);
+
+    if (typeof climateData === "string") {
+      return {
+        context: climateData,
+      };
+    }
+
+    return {
+      context: formatClimateToolContext(climateData),
+      directAnswer: buildDirectPrecipitationAnswer(message, climateData),
+    };
   } catch (error) {
     const detail = error instanceof Error ? error.message : "error desconocido";
 
-    return `
+    return {
+      context: `
 Contexto de herramientas externas:
 - Se detecto una consulta climatica, pero las herramientas climaticas no respondieron correctamente (${detail}).
 - Responde con orientacion general y aclara que no hay datos climaticos verificados disponibles para esta respuesta.
-`.trim();
+`.trim(),
+    };
   }
 }

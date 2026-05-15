@@ -32,7 +32,7 @@ This project is a small Next.js 16 App Router application with TypeScript, React
 - The chat page should fit within the viewport without page scroll; keep only the suggested prompts panel and a clean interaction surface with the composer anchored at the bottom.
 - The chat uses a local Next.js server route at `app/api/chat/route.ts` to call Groq and can enrich weather-related prompts with server-side Open-Meteo context.
 - Keep the initial assistant greeting `Bienvenido, ¿En qué te puedo ayudar?`, preserve the existing message styling, and send subsequent turns to Groq while maintaining conversation context.
-- Configure Groq with `GROQ_API_KEY`; `GROQ_MODEL` is optional and currently defaults to `llama-3.3-70b-versatile`.
+- Configure Groq with `GROQ_API_KEY` and `GROQ_MODEL`; the model must come from the environment and should not be hardcoded in application code.
 - Weather context uses Open-Meteo Forecast/Archive/Geocoding, NASA POWER, and IDEAM datasets on datos.gov.co without API keys. Treat those readings as weather data, not official emergency alerts or confirmed disaster/event records.
 - External weather source calls and the Groq request must keep explicit timeouts so Vercel does not leave the chat stuck in the loading state.
 - The chat layout can use two collapsible side panels: chat history on the left and suggested prompts on the right, both independently showable and hideable around the central conversation pane.

@@ -37,10 +37,10 @@ Crea un archivo `.env.local` con al menos esta configuracion:
 
 ```bash
 GROQ_API_KEY=tu_api_key
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=openai/gpt-oss-120b
 ```
 
-`GROQ_MODEL` es opcional. Si no se define, la app usa `llama-3.3-70b-versatile`.
+`GROQ_MODEL` es obligatorio y debe configurarse en el entorno; el modelo no tiene fallback hardcodeado en el código.
 
 Las consultas climáticas usan Open-Meteo Forecast, Archive y Geocoding APIs, NASA POWER, y datasets de IDEAM en datos.gov.co sin API key. Estos datos no reemplazan alertas oficiales, reportes de daños ni registros institucionales de IDEAM, DAGRAN o autoridades locales.
 
